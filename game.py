@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 class Game:
     def __init__(self):
-        self.gm = ChatGPTGameMaster()
+        self.gm = ChatGPTGameMaster(self)
         self.player = None
         self.witch_hunter = None
         self.village = None
@@ -68,7 +68,6 @@ class Game:
                 f"I am sorry for your loss, {self.player.name} the {self.player.animal}...",
                 delay=0.0,  # Debugging change back to .03
             )
-            print()
         # Upadate Game states
         self.gm.update_game_state("player_name", self.player.name)
         self.gm.update_game_state("player_animal", self.player.animal)
@@ -94,12 +93,20 @@ class Game:
         self.gm.update_game_state("village", self.village.description)
         self.gm.update_game_state("twist", self.twist)
 
+    def restart_game(self):
+        choice = slow_input("Do you want to play again? (y/n): ").strip().lower()
+        if choice == "y":
+            self.__init__()  # Reinitialize the game instance
+            self.start_game()
+        else:
+            slow_print("Thanks for playing!")
+            sys.exit()  # Exit the program
+
     def main_game_loop(self):
         while True:
             print()
-            command = (
-                slow_input("What do you want to do? (for details ): ").strip().lower()
-            )
+            command = slow_input("What do you do next?: ").strip().lower()
+            print()
             if command == "quit":
                 slow_print("Thanks for playing!")
                 break
@@ -126,11 +133,13 @@ class Game:
                     dangerous = action_result["Danger"]
                     player_trait_value = self.player.traits[task_trait]
 
+                    warning = "This is a dangrous task!" if dangerous else ""
+
                     task = action_result["Description"]
                     print()
                     roll_confirm = (
                         slow_input(
-                            f"You are trying to {task} which will require you to roll a {difficulty} for {task_trait}\n(You have {player_trait_value} and can add that to your roll). \n Roll dice? (y/n): "
+                            f"You are trying to {task} which will require you to roll a {difficulty} for {task_trait}\n {warning}\n(You have {player_trait_value} and can add that to your roll). \n Roll dice? (y/n): "
                         )
                         .strip()
                         .lower()
@@ -138,18 +147,34 @@ class Game:
 
                     if roll_confirm == "y":
                         roll_result = roll_dice(10)
+                        slow_print("Rolling the dice")
                         slow_print("...", delay=0.0)  # Debugging change back to .05
-                        slow_print(f"You rolled a {roll_result} + {player_trait_value}.")
+                        slow_print(
+                            f"You rolled a {roll_result} + {player_trait_value}."
+                        )
+                        print()
 
-                        task_suceess = roll_result + player_trait_value >= difficulty
+                        task_info = {
+                            "Description": task,
+                            "Danger": dangerous,
+                            "Trait": task_trait,
+                            "Difficulty": difficulty,
+                            "Roll": roll_result,
+                            "Trait Value": player_trait_value,
+                        }
 
-                        # Second call to LLM: Evaluate the task based on the dice roll
-                        task_result = self.gm.evaluate_task(command, roll_result)
-                        slow_print(task_result)  # Display the task outcome
+                        # Evaluate the task
+                        task_result = self.gm.generate_task_response(
+                            player_input=command, task_json=task_info
+                        )
+                        slow_print(task_result)
+                        continue  # Skip the rest of the loop
+
                     else:
                         slow_print("You chose not to roll the dice.")
+                        continue
 
-                response = self.gm.generate_response(command)
+                response = self.gm.generate_basic_response(command)
                 slow_print(response)
 
 
@@ -251,12 +276,15 @@ class Village:
 
 
 class ChatGPTGameMaster:
-    def __init__(self):
+    def __init__(self, game):
+        self.game = game
         load_dotenv()
         self.client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         self.state_manager = GameState()
         self.session_system_prompt = (
-            "You are the game master for 'The Witch is Dead.' Guide the player through the game, manage the story flow. You are a story teller do not talk about rules or mechanics. You should respond to their actions. Keeping the story context in mind. Use simple langauge and keep your responses within 100 words."
+            "You are the game master for 'The Witch is Dead.' Guide the player through the game and manage the story flow. "
+            "Player character animals don’t have opposable thumbs, and all they know of the human world is what the witch taught them. They can talk to other animals of the same or similar species."
+            "You are a storyteller, so do not talk about rules or mechanics. Use simple language and keep your responses within 100 words."
             + self.state_manager.get_context()
         )
 
@@ -265,16 +293,15 @@ class ChatGPTGameMaster:
             model="gpt-4o",
             messages=prompt_messages,
             temperature=0.7,
-            max_tokens=200,
+            max_tokens=500,
             top_p=1.0,
             frequency_penalty=0.0,
             presence_penalty=0.6,
         )
         return response.choices[0].message.content
 
-    def generate_response(self, player_input):
+    def generate_basic_response(self, player_input):
         context = "\n".join(self.state_manager.summarize_history())
-        user_prompt = f"{player_input}"
 
         prompt_messages = [
             {"role": "system", "content": self.session_system_prompt},
@@ -282,28 +309,89 @@ class ChatGPTGameMaster:
                 "role": "assistant",
                 "content": f"The story so far: {context} What do yo want to do next?",
             },
-            {"role": "user", "content": f"Player action: {user_prompt}"},
+            {"role": "user", "content": f"Player action: {player_input}"},
         ]
 
         answer = self.send_prompt(prompt_messages)
         self.state_manager.add_to_history(f"User: {player_input}")
         self.state_manager.add_to_history(f"ChatGPT: {answer}")
 
-        print(context)  # Debugging
+        return answer
+
+    def generate_task_response(self, player_input, task_json):
+        context = "\n".join(self.state_manager.summarize_history())
+        description = task_json["Description"]
+        danger = task_json["Danger"]
+        trait = task_json["Trait"]
+        difficulty = task_json["Difficulty"]
+        trait_value = task_json["Trait Value"]
+        roll = task_json["Roll"]
+
+        # Update Danger state if task is dangerous
+        if danger:
+            self.state_manager.update_state(
+                "player_danger", self.state_manager.player_danger + 1
+            )
+            slow_print(
+                f"You gained a point of danger. Your danger level is now {self.state_manager.player_danger}."
+            )
+
+        # Check if player is in serious trouble (They roll equal to or under their danger)
+        serious_trouble = roll <= self.state_manager.player_danger
+
+        game_over = False
+        task_result = ""
+
+        # Check if the player succeeded or failed the task
+        if roll + trait_value >= difficulty:  # Succeeded the task
+            if serious_trouble:
+                task_result = "You succeeded in your task, but found yourself in a perilous situation—dead, trapped, lost, or captured. The story ends here."
+                game_over = True
+            else:
+                task_result = f"With your {trait} skill, you successfully {description}. Your effort pays off!"
+        else:  # Failed the task
+            if serious_trouble:
+                task_result = "Your attempt to complete the task fails, and you find yourself in grave danger—dead, trapped, lost, or captured. The story ends here."
+                game_over = True
+            else:
+                task_result = f"Despite your best efforts, you couldn't {description}. Try something else."
+
+        # Generate the response
+        prompt_messages = [
+            {
+                "role": "system",
+                "content": f"{self.session_system_prompt} \nGive a story description of what just happened with this task.",
+            },
+            {
+                "role": "assistant",
+                "content": f"The story so far: {context}. \nThe player is trying to {description} which requires a roll of {difficulty} for {trait}. {task_result}",
+            },
+            {"role": "user", "content": f"Player action: {player_input}"},
+        ]
+
+        answer = self.send_prompt(prompt_messages)
+        self.state_manager.add_to_history(f"User: {player_input}")
+        self.state_manager.add_to_history(f"ChatGPT: {answer}")
+
+        if game_over:
+            slow_print(answer)
+            self.game.restart_game()
+
         return answer
 
     def determine_player_action(self, player_input):
-        task_rules = "Most tasks that are normal to humans are really difficult for animals, unless they’re broken down into smaller steps: remember, you don’t have opposable thumbs, and all you know of the human world is what the witch taught you. You can talk to other animals of the same or similar species. (The player can lower their danger by solving, or running away from, their problems.)\n\
-        \
-        The traits are CLEVER (understand/interact with humans)\n\
-        FIERCE (scare, drag, push, carry, bite, scratch)\n\
-        SLY (sneak, steal, hide)\n\
-        QUICK (outpace, climb, evade)\n\
-        Task difficulties are on a scale of 6-10: 6 - Simple, 7 - Basic, 8 - Challenging, 9 - Difficult, 10 - Near-impossible\n\
-        \
-        Determine if this action is a task or worth rolling for, determine how difficult this task would be from 6-10, then determine if this task is dangerous for the character.\n\
-        Respond with JSON format: 'Task': True/False, 'Description': [description of attempted task],'Danger': True/False, 'Trait': '[Clever/Fierce/Sly/Quick]', 'Difficulty': [number 6-10]\n\
-        Example: 'Task': True, 'Description': 'Trying to steal the key from the witch hunter', 'Danger': True, 'Trait': 'Sly', 'Difficulty': 7\n"
+        task_rules = (
+            "Basic tasks do not require rules and get a false. Most tasks that are normal to humans are really difficult for animals, unless they’re broken down into smaller steps: "
+            "The player can lower their danger by solving, or running away from, their problems.\n"
+            "The traits are CLEVER (understand/interact with humans)\n"
+            "FIERCE (scare, drag, push, carry, bite, scratch)\n"
+            "SLY (sneak, steal, hide)\n"
+            "QUICK (outpace, climb, evade)\n"
+            "Task difficulties are on a scale of 6-10: 6 - Simple, 7 - Basic, 8 - Challenging, 9 - Difficult, 10 - Near-impossible\n\n"
+            "Determine if this action is a task worth rolling for, determine how difficult this task would be from 6-10, then determine if this task is dangerous for the character.\n"
+            "Respond with JSON format: {'Task': True/False, 'Description': [description of attempted task],'Danger': True/False, 'Trait': '[Clever/Fierce/Sly/Quick]', 'Difficulty': [number 6-10]}\n"
+            "Example: {'Task': True, 'Description': 'Trying to steal the key from the witch hunter', 'Danger': True, 'Trait': 'Sly', 'Difficulty': 7}\n"
+        )
         response = self.client.chat.completions.create(
             model="gpt-4o",
             response_format={"type": "json_object"},
@@ -316,13 +404,7 @@ class ChatGPTGameMaster:
             ],
         )
         json_response = json.loads(response.choices[0].message.content)
-        print(json_response)  # Debugging
         return json_response
-
-    def evaluate_task(self, player_input, roll_result):
-        context = "\n".join(self.state_manager.summarize_history())
-        full_prompt = f"{context}\nPlayer action: {player_input}; Dice roll: {roll_result}\nEvaluate the outcome."
-        return self.send_prompt(full_prompt)
 
     def update_game_state(self, key, value):
         self.state_manager.update_state(key, value)
@@ -376,12 +458,6 @@ class GameState:
         # Implement a function that summarizes the history
         # For now, let's just keep the last 10 interactions
         return self.conversation_history[-10:]
-
-
-class Task:
-    def __init__(self, description, difficulty):
-        self.description = description
-        self.difficulty = difficulty
 
 
 def get_twist(roll):
