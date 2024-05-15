@@ -19,18 +19,22 @@ class Game:
     def start_game(self):
         os.system("cls" if os.name == "nt" else "clear")
         slow_print("Welcome to 'The Witch is Dead'!")
+        slow_print(
+                "\nOnce upon a time, \nthere was a kind and wise and beautiful witch who lived in the forest with her familiars, \nand her life was peaceful and happy. \nUntil a FUCKING WITCH-HUNTER broke into her cottage and dragged her our and FUCKING MURDERED HER and now she’s DEAD. \nBut if you get revenge and kill him and bring his EYES to her corpse within a week she’ll come back to life. \nOr so you’ve heard. \nEven if it doesn’t work, at least he’s dead. \nThe Witch-Hunter has retreated to the village, the FUCKING COWARD. \nGet him.",
+                delay=0.01, 
+            )
         self.create_player()
         self.create_witch_hunter()
         self.create_village()
         self.main_game_loop()
 
     def create_player(self):
-        name = "Lar"  # Debugging
-        # name = slow_input("Enter your name: ")
+        name = slow_input("Enter your name: ")
         self.determine_animal(name)
         print()
 
     def determine_animal(self, name):
+        print()
         slow_print("You are a cute woodland animal. Let's find out which one.")
         slow_print("Rolling the dice")
         slow_print("...", delay=0.5)
@@ -42,16 +46,15 @@ class Game:
                 FIERCE: {self.player.traits['Fierce']}  (scare, drag, push, carry, bite, scratch)\n\
                 SLY: {self.player.traits['Sly']}    (sneak, steal, hide)\n\
                 QUICK: {self.player.traits['Quick']}    (outpace, climb, evade)",
-            delay=0.0,  # Debugging change back to .01
+            delay=0.02,
         )
         print()
         slow_print(f"Your witch taught you one spell: {self.player.spell}")
         print()
 
-        accept_character = "y"  # Debugging
-        # accept_character = slow_input(
-        #     f"Do you want to play as a {self.player.animal}? (y/n): "
-        # )
+        accept_character = slow_input(
+            f"Do you want to play as a {self.player.animal}? (y/n): "
+        )
 
         if accept_character.strip().lower() == "n":
             slow_print("Rerolling your animal.")
@@ -59,14 +62,10 @@ class Game:
             print()
             self.determine_animal(name)
         else:
-            slow_print(
-                "Once upon a time, \nthere was a kind and wise and beautiful witch who lived in the forest with her familiars, \nand her life was peaceful and happy. \nUntil a FUCKING WITCH-HUNTER broke into her cottage and dragged her our and FUCKING MURDERED HER and now she’s DEAD. \nBut if you get revenge and kill him and bring his EYES to her corpse within a week she’ll come back to life. \nOr so you’ve heard. \nEven if it doesn’t work, at least he’s dead. \nThe Witch-Hunter has retreated to the village, the FUCKING COWARD. \nGet him.",
-                delay=0.0,  # Debugging, needs to be faster thant the rest of it or just removed
-            )
             print()
             slow_print(
                 f"I am sorry for your loss, {self.player.name} the {self.player.animal}...",
-                delay=0.0,  # Debugging change back to .03
+                delay=0.03,
             )
         # Upadate Game states
         self.gm.update_game_state("player_name", self.player.name)
@@ -120,7 +119,7 @@ class Game:
                 slow_print(f"Witch-Hunter Description: {self.witch_hunter.description}")
                 slow_print(f"Village Description: {self.village.description}")
                 slow_print(f"Twist: {self.twist}")
-            elif command == "context":  # Debugging
+            elif command == "context":
                 slow_print(self.gm.state_manager.get_context())
             else:
                 # Determin Player action
@@ -148,7 +147,7 @@ class Game:
                     if roll_confirm == "y":
                         roll_result = roll_dice(10)
                         slow_print("Rolling the dice")
-                        slow_print("...", delay=0.0)  # Debugging change back to .05
+                        slow_print("...", delay=0.5)
                         slow_print(
                             f"You rolled a {roll_result} + {player_trait_value}."
                         )
@@ -456,8 +455,8 @@ class GameState:
 
     def summarize_history(self):
         # Implement a function that summarizes the history
-        # For now, let's just keep the last 10 interactions
-        return self.conversation_history[-10:]
+        # For now, let's just keep the last 20 interactions
+        return self.conversation_history[-20:]
 
 
 def get_twist(roll):
@@ -480,7 +479,7 @@ def roll_dice(sides):
     return random.randint(1, sides)
 
 
-def slow_print(text, delay=0.0):
+def slow_print(text, delay=0.05):
     """
     Prints the given text to the terminal one character at a time with a delay.
 
