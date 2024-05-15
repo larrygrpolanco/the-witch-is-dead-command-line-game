@@ -20,9 +20,9 @@ class Game:
         os.system("cls" if os.name == "nt" else "clear")
         slow_print("Welcome to 'The Witch is Dead'!")
         slow_print(
-                "\nOnce upon a time, \nthere was a kind and wise and beautiful witch who lived in the forest with her familiars, \nand her life was peaceful and happy. \nUntil a FUCKING WITCH-HUNTER broke into her cottage and dragged her our and FUCKING MURDERED HER and now she’s DEAD. \nBut if you get revenge and kill him and bring his EYES to her corpse within a week she’ll come back to life. \nOr so you’ve heard. \nEven if it doesn’t work, at least he’s dead. \nThe Witch-Hunter has retreated to the village, the FUCKING COWARD. \nGet him.",
-                delay=0.01, 
-            )
+            "\nOnce upon a time, \nthere was a kind and wise and beautiful witch who lived in the forest with her familiars, \nand her life was peaceful and happy. \nUntil a FUCKING WITCH-HUNTER broke into her cottage and dragged her our and FUCKING MURDERED HER and now she’s DEAD. \nBut if you get revenge and kill him and bring his EYES to her corpse within a week she’ll come back to life. \nOr so you’ve heard. \nEven if it doesn’t work, at least he’s dead. \nThe Witch-Hunter has retreated to the village, the FUCKING COWARD. \nGet him.",
+            delay=0.01,
+        )
         self.create_player()
         self.create_witch_hunter()
         self.create_village()
