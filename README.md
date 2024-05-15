@@ -2,6 +2,14 @@
 
 Welcome to "The Witch is Dead", a Python-based command line game where you play as a woodland animal seeking vengeance for the murder of a kind and wise witch by a dreaded witch-hunter. Navigate through villages, confront dangers, and perhaps, bring your witch back to life.
 
+Future Improvements & Bugs
+- Add chapters and stages to help the LLM lead the story
+- Currenty the game only saves the last 20 interactions, Chapters can be summarized so that this can be extended.
+- Save Clues to game state
+- BUG: line 133, in main_game_loop
+    player_trait_value = self.player.traits[task_trait]
+
+
 ## System Requirements
 
 - Python 3.x
