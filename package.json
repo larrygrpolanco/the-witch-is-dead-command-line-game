@@ -25,5 +25,8 @@
 		"prettier-plugin-svelte": "^3.3.3",
 		"svelte": "^5.0.0",
 		"vite": "^6.2.5"
+	},
+	"dependencies": {
+		"openai": "^4.92.1"
 	}
 }
