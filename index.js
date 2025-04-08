@@ -165,18 +165,3 @@ class Game {
     }
   }
 }
-
-class Player {
-  constructor(name, animalRoll) {
-    this.name = name;
-    const { animal, traits } = this.getAnimal(animalRoll);
-    this.animal = animal;
-    this.traits = traits;
-    this.spell = this.getSpell(rollDice(10));
-    this.danger = 0;
-  }
-
-  getAnimal(roll) {
-    const animals = {
-      1: ["Fox", { Clever: 2, Fierce: 2, Sly: 1, Quick: 1 }],
-      2: ["Cat", { Clever: 0, Fierce: 1, Sly: 3,
