@@ -47,8 +47,8 @@
 			<div class="scroll-container">
 				<p class="intro-text">
 					Once upon a time, there was a kind and wise and beautiful witch who lived in the forest
-					with her familiars, and her life was peaceful and happy. Until a @&#$?& WITCH-HUNTER
-					broke into her cottage and dragged her out and &#%!@?! MURDERED HER and now she's DEAD.
+					with her familiars, and her life was peaceful and happy. Until a @&#$?& WITCH-HUNTER broke
+					into her cottage and dragged her out and &#%!@?! MURDERED HER and now she's DEAD.
 				</p>
 				<p class="intro-text">
 					But if you get revenge and kill him and bring his EYES to her corpse within a week she'll
