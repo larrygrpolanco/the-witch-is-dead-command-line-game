@@ -1,0 +1,60 @@
+## Game Description
+
+"The Witch is Dead" is a darkly whimsical revenge tale that brilliantly leverages AI for dynamic storytelling. Players embody a small woodland animal familiar whose beloved witch has been murdered by a witch hunter. The game's genius lies in how it uses language models to create an adaptive, responsive game master that interprets player actions contextually rather than relying on rigid command structures.
+
+What makes this implementation particularly innovative is:
+
+1. **Intelligent action analysis**: The AI determines which actions require skill checks, what difficulty they should have, and which animal traits apply - creating an intuitive gameplay flow.
+
+2. **Contextual storytelling**: The game keeps track of the narrative history, player traits, and world state to deliver cohesive and personalized responses.
+
+3. **Dynamic difficulty**: The danger system creates escalating stakes as players take risks, with the AI considering both success/failure and danger level when generating outcomes.
+
+4. **Accessible complexity**: Despite its simple interface, the game offers rich strategic depth as players must consider their animal's unique traits when planning their approach.
+
+This game showcases how LLMs can transform traditional game mechanics into fluid, natural experiences that adapt to player creativity while maintaining consistent narrative and mechanical integrity.
+
+## Project Architecture
+
+### Project Structure
+
+```
+witch-is-dead/
+├── src/
+│   ├── lib/
+│   │   ├── components/
+│   │   │   ├── GameConsole.svelte
+│   │   │   ├── StatsPanel.svelte
+│   │   │   ├── GameInput.svelte
+│   │   │   ├── SlowText.svelte
+│   │   │   ├── CharacterPortrait.svelte
+│   │   │   ├── DiceRoll.svelte
+│   │   │   └── Sidebar.svelte
+│   │   ├── services/
+│   │   │   ├── gameService.js
+│   │   │   └── aiService.js
+│   │   ├── stores/
+│   │   │   ├── gameStore.js
+│   │   │   └── uiStore.js
+│   │   ├── data/
+│   │   │   └── gameData.js
+│   │   └── utils/
+│   │       ├── dice.js
+│   │       └── textEffects.js
+│   ├── routes/
+│   │   ├── +page.svelte
+│   │   ├── +layout.svelte
+│   │   └── api/
+│   │       └── ai/
+│   │           ├── +server.js
+│   │           └── action-analysis/+server.js
+│   └── app.html
+├── static/
+│   ├── fonts/
+│   │   └── handdrawn-font.woff2
+│   └── images/
+│       └── portraits/
+│           ├── fox.png
+│           ├── cat.png
+│           └── ...
+```

@@ -1,62 +1,38 @@
-# The Witch is Dead
+# sv
 
-Welcome to "The Witch is Dead", a Python-based command line game where you play as a woodland animal seeking vengeance for the murder of a kind and wise witch by a dreaded witch-hunter. Navigate through villages, confront dangers, and perhaps, bring your witch back to life.
+Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
 
-Future Improvements & Bugs
-- Add chapters and stages to help the LLM lead the story
-- Currenty the game only saves the last 20 interactions, Chapters can be summarized so that this can be extended.
-- Save Clues to game state
-- BUG: line 133, in main_game_loop
-    player_trait_value = self.player.traits[task_trait]
+## Creating a project
 
+If you're seeing this, you've probably already done this step. Congrats!
 
-## System Requirements
+```bash
+# create a new project in the current directory
+npx sv create
 
-- Python 3.x
-- Internet connection for API calls
-- Python libraries: `random`, `sys`, `time`, `os`, `json`, `dotenv`, `openai`
+# create a new project in my-app
+npx sv create my-app
+```
 
-## Installation
+## Developing
 
-1. Clone this repository:
-git clone https://github.com/yourusername/thewitchisdead.git](https://github.com/larrygrpolanco/the-witch-is-dead-command-line-game/
+Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
 
-2. Navigate to the cloned directory:
+```bash
+npm run dev
 
-3. Install the required Python packages:
-pip install openai
+# or start the server and open the app in a new browser tab
+npm run dev -- --open
+```
 
+## Building
 
-## Setting Up
+To create a production version of your app:
 
-Before running the game, you need to set up your OpenAI API key:
- Create an `.env` file and include `OPENAI_API_KEY` with your OpenAI API key.
+```bash
+npm run build
+```
 
-## Usage
+You can preview the production build with `npm run preview`.
 
-To start the game, run the following command in your terminal:
-
-python3 main.py
-
-
-Follow the on-screen prompts to navigate through the game. You can perform actions like exploring the village, learning about the witch-hunter, and using your animal traits to complete tasks.
-
-## Commands
-
-- `info`: Displays information about your character and current game state.
-- `quit`: Exit the game.
-
-Enjoy the interactive storytelling experience, where your choices shape the outcome of your adventure!
-
-## Contributing
-
-Contributions are welcome! Please feel free to fork the repository, make changes, and submit pull requests.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE.md) file for details.
-
-
-
-
-
+> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
