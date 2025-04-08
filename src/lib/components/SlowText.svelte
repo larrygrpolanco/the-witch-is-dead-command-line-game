@@ -1,111 +1,147 @@
 <script>
-  import { onMount, createEventDispatcher } from 'svelte';
-  import { uiState } from '../stores/uiStore';
-  
-  export let text = '';
-  export let speed = 30; // milliseconds per character
-  export let instant = false;
-  
-  const dispatch = createEventDispatcher();
-  let displayText = '';
-  let intervalId;
-  let currentIndex = 0;
-  let isFastForward = false;
-  
-  $: if ($uiState && $uiState.textSpeed) {
-    speed = $uiState.textSpeed;
-  }
-  
-  onMount(() => {
-    if (instant) {
-      displayText = text;
-      dispatch('complete');
-    } else {
-      startTyping();
-    }
-    
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  });
-  
-  function startTyping() {
-    if (text.length === 0) return;
-    currentIndex = 0;
-    displayText = '';
-    
-    if (intervalId) clearInterval(intervalId);
-    
-    intervalId = setInterval(() => {
-      if (currentIndex < text.length) {
-        displayText += text[currentIndex];
-        currentIndex++;
-      } else {
-        clearInterval(intervalId);
-        intervalId = null;
-        dispatch('complete');
-      }
-    }, isFastForward ? 5 : speed);
-  }
-  
-  function handleClick() {
-    // Fast-forward or complete text on click
-    if (intervalId) {
-      if (!isFastForward) {
-        // First click speeds up text
-        isFastForward = true;
-        if (intervalId) clearInterval(intervalId);
-        intervalId = setInterval(() => {
-          if (currentIndex < text.length) {
-            displayText += text[currentIndex];
-            currentIndex++;
-          } else {
-            clearInterval(intervalId);
-            intervalId = null;
-            dispatch('complete');
-          }
-        }, 5); // Much faster speed
-      } else {
-        // Second click shows all text immediately
-        if (intervalId) clearInterval(intervalId);
-        displayText = text;
-        intervalId = null;
-        dispatch('complete');
-      }
-    }
-  }
+	import { onMount, createEventDispatcher } from 'svelte';
+	import { uiState } from '$lib/stores/uiStore.js';
+
+	export let text = '';
+	export let type = 'narration'; // narration, player, system
+	export let onTaskConfirm = null; // Function to handle task confirmation
+
+	let displayedText = '';
+	let index = 0;
+	let intervalId;
+	let isFullyDisplayed = false;
+
+	const dispatch = createEventDispatcher();
+
+	// Extract task information if this message contains a task check prompt
+	$: taskInfo = extractTaskInfo(text);
+
+	$: typingSpeed = $uiState.textSpeed;
+
+	function animateText() {
+		if (index < text.length) {
+			displayedText += text[index];
+			index++;
+		} else {
+			clearInterval(intervalId);
+			isFullyDisplayed = true;
+		}
+	}
+
+	function skipAnimation() {
+		clearInterval(intervalId);
+		displayedText = text;
+		isFullyDisplayed = true;
+	}
+
+	function extractTaskInfo(text) {
+		// Parse task information from text if it contains a task check
+		// Example pattern: "You are trying to {action} which will require you to roll a {difficulty} for {trait}"
+		const taskPattern = /You are trying to (.*?) which will require you to roll a (\d+) for (\w+)/;
+		const match = text.match(taskPattern);
+
+		if (match && type === 'system') {
+			const description = match[1];
+			const difficulty = parseInt(match[2]);
+			const trait = match[3];
+
+			// Check if dangerous
+			const isDangerous = text.includes('This is a dangerous task!');
+
+			return {
+				Description: description,
+				Difficulty: difficulty,
+				Trait: trait,
+				Danger: isDangerous
+			};
+		}
+
+		return null;
+	}
+
+	function confirmRoll() {
+		if (onTaskConfirm && taskInfo) {
+			onTaskConfirm(taskInfo);
+		}
+	}
+
+	function handleClick() {
+		if (!isFullyDisplayed) {
+			skipAnimation();
+		} else if (taskInfo) {
+			confirmRoll();
+		}
+	}
+
+	onMount(() => {
+		intervalId = setInterval(animateText, typingSpeed);
+		return () => clearInterval(intervalId);
+	});
 </script>
 
-<span class="slow-text" on:click={handleClick}>
-  {#if displayText}
-    {displayText}
-  {:else}
-    &nbsp;
-  {/if}
-  {#if currentIndex < text.length && !intervalId}
-    <span class="cursor">_</span>
-  {/if}
-</span>
+<div class="text-container {type}" on:click={handleClick}>
+	<p>{@html displayedText}</p>
+
+	{#if isFullyDisplayed && taskInfo && type === 'system'}
+		<div class="roll-prompt">
+			<button class="roll-button" on:click={confirmRoll}> Roll Dice </button>
+			<button class="cancel-button" on:click={() => dispatch('cancel')}> Cancel </button>
+		</div>
+	{/if}
+</div>
 
 <style>
-  .slow-text {
-    cursor: pointer;
-    position: relative;
-    white-space: pre-wrap;
-  }
-  
-  .cursor {
-    display: inline-block;
-    animation: blink 1s step-end infinite;
-    color: #4ecdc4;
-  }
-  
-  @keyframes blink {
-    from, to {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0;
-    }
-  }
+	.text-container {
+		margin-bottom: 1rem;
+		line-height: 1.6;
+		position: relative;
+	}
+
+	p {
+		margin: 0.5rem 0;
+		word-break: break-word;
+	}
+
+	.narration {
+		color: #3a3a3a;
+	}
+
+	.player {
+		color: #2d5e8c;
+		font-style: italic;
+		margin-left: 1rem;
+	}
+
+	.system {
+		color: #8c2d2d;
+		font-weight: bold;
+		background-color: rgba(245, 241, 232, 0.6);
+		padding: 0.5rem;
+		border-radius: 4px;
+	}
+
+	.roll-prompt {
+		display: flex;
+		gap: 0.5rem;
+		margin-top: 0.5rem;
+	}
+
+	button {
+		padding: 0.5rem 1rem;
+		border: none;
+		border-radius: 4px;
+		font-family: 'HanddrawnFont', cursive;
+		font-size: 0.9rem;
+		cursor: pointer;
+	}
+
+	.roll-button {
+		background-color: #5c4b31;
+		color: #f5f1e8;
+	}
+
+	.cancel-button {
+		background-color: #a89e8a;
+		color: #fff;
+	}
 </style>

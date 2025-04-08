@@ -1,71 +1,74 @@
-import { writable } from 'svelte/store';
+import { writable, derived } from 'svelte/store';
 
 // Initial game state
 const initialState = {
-  currentLocation: null,
-  inventory: [],
-  stats: {
-    strength: 0,
-    agility: 0,
-    wits: 0,
-    charm: 0,
-    health: 100,
-    inventory: []
-  },
-  currentCharacter: null,
-  messages: [],
-  waitingForInput: false,
-  inputPlaceholder: 'Enter your command...'
+	initialized: false,
+	player: {
+		name: '',
+		animal: '',
+		traits: {},
+		spell: '',
+		danger: 0
+	},
+	witchHunter: '',
+	village: '',
+	twist: '',
+	conversationHistory: []
 };
 
-// Create the writable store
-export const gameState = writable(initialState);
+// Create the store
+const createGameStore = () => {
+	const { subscribe, set, update } = writable(initialState);
 
-// Helper functions for game state management can be added here
-export function resetGameState() {
-  gameState.set(initialState);
-}
+	return {
+		subscribe,
+		initialize: () => set(initialState),
+		setPlayerInfo: (name, animal, traits, spell) =>
+			update((state) => ({
+				...state,
+				player: {
+					...state.player,
+					name,
+					animal,
+					traits,
+					spell
+				}
+			})),
+		setGameWorld: (witchHunter, village, twist) =>
+			update((state) => ({
+				...state,
+				witchHunter,
+				village,
+				twist
+			})),
+		updateDanger: (newDanger) =>
+			update((state) => ({
+				...state,
+				player: {
+					...state.player,
+					danger: newDanger
+				}
+			})),
+		addToHistory: (message, type) =>
+			update((state) => ({
+				...state,
+				conversationHistory: [...state.conversationHistory, { content: message, type }]
+			}))
+		// More methods as needed
+	};
+};
 
-export function addToInventory(item) {
-  gameState.update(state => ({
-    ...state,
-    stats: {
-      ...state.stats,
-      inventory: [...state.stats.inventory, item]
-    }
-  }));
-}
+export const gameState = createGameStore();
 
-export function removeFromInventory(item) {
-  gameState.update(state => ({
-    ...state,
-    stats: {
-      ...state.stats,
-      inventory: state.stats.inventory.filter(i => i !== item)
-    }
-  }));
-}
-
-export function updateStat(statName, value) {
-  gameState.update(state => ({
-    ...state,
-    stats: {
-      ...state.stats,
-      [statName]: value
-    }
-  }));
-}
-
-export function changeLocation(locationId) {
-  gameState.update(state => ({
-    ...state,
-    currentLocation: locationId
-  }));
-}
-
-export function addMessage(text, type = 'narration', speed = 30) {
-  gameState.update(state => ({
-    ...state,
-    messages: [...state.messages, { text, type, speed }]
-  }));
-}
+// Derived store for concise game context (for AI)
+export const gameContext = derived(gameState, ($state) => {
+	// Format game state into context for AI
+	return {
+		player: $state.player,
+		witchHunter: $state.witchHunter,
+		village: $state.village,
+		twist: $state.twist,
+		// Last few conversation entries
+		recentHistory: $state.conversationHistory.slice(-10)
+	};
+});

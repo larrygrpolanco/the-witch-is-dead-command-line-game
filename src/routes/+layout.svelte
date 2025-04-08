@@ -1,119 +1,100 @@
 <script>
-  import { onMount } from 'svelte';
-  import { initGame } from '../lib/services/gameService';
-  import { gameState } from '../lib/stores/gameStore';
-  import { uiState } from '../lib/stores/uiStore';
-  
-  // Initialize the game on mount
-  onMount(() => {
-    initGame();
-    
-    // Check for saved game state in localStorage
-    const savedGameState = localStorage.getItem('witch-game-state');
-    if (savedGameState) {
-      try {
-        const parsedState = JSON.parse(savedGameState);
-        gameState.set(parsedState);
-      } catch (error) {
-        console.error('Error loading saved game state:', error);
-      }
-    }
-    
-    // Check for saved UI preferences
-    const savedUIState = localStorage.getItem('witch-ui-state');
-    if (savedUIState) {
-      try {
-        const parsedUIState = JSON.parse(savedUIState);
-        uiState.set(parsedUIState);
-      } catch (error) {
-        console.error('Error loading saved UI state:', error);
-      }
-    }
-    
-    // Save game state when it changes
-    const unsubscribeGame = gameState.subscribe(state => {
-      if (state.currentLocation) { // Only save if the game is initialized
-        localStorage.setItem('witch-game-state', JSON.stringify(state));
-      }
-    });
-    
-    // Save UI preferences when they change
-    const unsubscribeUI = uiState.subscribe(state => {
-      localStorage.setItem('witch-ui-state', JSON.stringify(state));
-    });
-    
-    return () => {
-      unsubscribeGame();
-      unsubscribeUI();
-    };
-  });
-  
-  // Handle dark mode
-  $: if ($uiState) {
-    if ($uiState.darkMode) {
-      document.body.classList.add('dark-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
-    }
-  }
+	import { onMount } from 'svelte';
+	import '../app.css'; // Import global styles (this is an alternative to static/global.css)
+
+	// You can add any global state or initialization here
+	let fontsLoaded = false;
+
+	onMount(() => {
+		// This ensures the "flash of unstyled content" is minimized
+		// by only showing content when fonts are loaded
+		document.fonts.ready.then(() => {
+			fontsLoaded = true;
+		});
+	});
 </script>
 
-<div class="app">
-  <main>
-    <slot />
-  </main>
-</div>
-
 <svelte:head>
-  <title>The Witch is Dead - Interactive Fiction Game</title>
+	<!-- Preload your hand-drawn font to improve performance -->
+	<link
+		rel="preload"
+		href="/fonts/your-handdrawn-font.woff2"
+		as="font"
+		type="font/woff2"
+		crossorigin
+	/>
+
+	<!-- Meta tags for better mobile experience -->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta
+		name="description"
+		content="The Witch is Dead - A revenge tale where you play as a woodland animal familiar seeking vengeance for your murdered witch."
+	/>
+
+	<!-- Favicon -->
+	<link rel="icon" href="/favicon.png" />
 </svelte:head>
 
+<div class="app-container" class:fonts-loaded={fontsLoaded}>
+	<!-- Main layout wrapper -->
+	<main>
+		<slot />
+	</main>
+
+	<!-- Optional footer if you want game credits, etc. -->
+	<footer>
+		<p class="credits">
+			The Witch is Dead - a game by <a
+				href="https://yourwebsite.com"
+				target="_blank"
+				rel="noopener noreferrer">Your Name</a
+			>
+		</p>
+	</footer>
+</div>
+
 <style>
-  :global(body) {
-    margin: 0;
-    padding: 0;
-    font-family: 'Courier New', monospace;
-    background-color: #f0f0f0;
-    color: #333;
-    transition: background-color 0.3s, color 0.3s;
-  }
-  
-  :global(body.dark-mode) {
-    background-color: #111;
-    color: #f0f0f0;
-  }
-  
-  .app {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 1rem;
-  }
-  
-  main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  @media (min-width: 768px) {
-    .app {
-      padding: 2rem;
-    }
-  }
-  
-  /* Add a webfont if one exists */
-  @font-face {
-    font-family: 'HanddrawnFont';
-    src: url('/fonts/handdrawn-font.woff2') format('woff2');
-    font-weight: normal;
-    font-style: normal;
-    font-display: swap;
-  }
-  
-  :global(.handdrawn) {
-    font-family: 'HanddrawnFont', cursive;
-  }
+	/* These styles apply to all pages */
+	.app-container {
+		display: flex;
+		flex-direction: column;
+		min-height: 100vh;
+		opacity: 0;
+		transition: opacity 0.3s ease;
+	}
+
+	.fonts-loaded {
+		opacity: 1;
+	}
+
+	main {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+	}
+
+	footer {
+		padding: 1rem;
+		text-align: center;
+		font-size: 0.8rem;
+		color: #8a7d68;
+		background-color: #f5f1e8;
+		border-top: 1px solid #a89e8a;
+	}
+
+	.credits a {
+		color: #5c4b31;
+		text-decoration: none;
+	}
+
+	.credits a:hover {
+		text-decoration: underline;
+	}
+
+	/* Hide footer on small screens when in game */
+	@media (max-height: 600px) {
+		footer {
+			display: none;
+		}
+	}
 </style>

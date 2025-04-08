@@ -1,58 +1,86 @@
-// AI Service for analyzing player actions and generating responses
+class AIService {
+	constructor() {
+		this.baseUrl = '/api/ai';
+	}
 
-/**
- * Analyzes a player action that wasn't recognized by the standard command parser
- * and returns an appropriate response.
- */
-async function analyzeAction(actionText) {
-  try {
-    const response = await fetch('/api/ai/action-analysis', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ action: actionText })
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    return data.response;
-  } catch (error) {
-    console.error('Error in AI service:', error);
-    return "I don't understand what you want to do. Try a different command or type 'help' for assistance.";
-  }
+	async generateBasicResponse(playerInput, gameContext) {
+		try {
+			const systemPrompt =
+				"You are the game master for 'The Witch is Dead.' Guide the player through the game and manage the story flow. Player character animals don't have opposable thumbs, and all they know of the human world is what the witch taught them. They can talk to other animals of the same or similar species. You are a storyteller, so do not talk about rules or mechanics. Use simple language and keep your responses within 100 words.";
+
+			const response = await fetch(`${this.baseUrl}`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					prompt: playerInput,
+					context: gameContext,
+					systemPrompt
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to get AI response');
+			}
+
+			const data = await response.json();
+			return data.message;
+		} catch (error) {
+			console.error('Error generating AI response:', error);
+			return 'Something went wrong with the magical forces that guide our story. Please try again.';
+		}
+	}
+
+	async analyzeAction(playerInput, characterInfo) {
+		try {
+			const response = await fetch(`${this.baseUrl}/action-analysis`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					playerInput,
+					characterInfo
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to analyze action');
+			}
+
+			return await response.json();
+		} catch (error) {
+			console.error('Error analyzing action:', error);
+			// Return a default analysis that doesn't require a roll
+			return { Task: false };
+		}
+	}
+
+	async generateTaskResponse(playerInput, taskResult, gameContext) {
+		try {
+			const systemPrompt = `You are the game master for 'The Witch is Dead.' Give a story description of what just happened with this task. ${taskResult.Success ? 'The player succeeded' : 'The player failed'} ${taskResult.SeriousTrouble ? 'but is in serious trouble' : ''}.`;
+
+			const response = await fetch(`${this.baseUrl}`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					prompt: `Player tried to ${taskResult.Description}. Roll result: ${taskResult.Roll + taskResult.TraitValue} vs difficulty ${taskResult.Difficulty}.`,
+					context: {
+						...gameContext,
+						taskResult
+					},
+					systemPrompt
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to get task response');
+			}
+
+			const data = await response.json();
+			return data.message;
+		} catch (error) {
+			console.error('Error generating task response:', error);
+			return 'The magical forces guiding our story have faltered. Please try again.';
+		}
+	}
 }
 
-/**
- * Generates a description for a given scene or object when the predefined
- * descriptions are not available.
- */
-async function generateDescription(subject, context) {
-  try {
-    const response = await fetch('/api/ai/generate-description', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ subject, context })
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    return data.description;
-  } catch (error) {
-    console.error('Error generating description:', error);
-    return "You see nothing unusual about it.";
-  }
-}
-
-export const aiService = {
-  analyzeAction,
-  generateDescription
-};
+export const aiService = new AIService();

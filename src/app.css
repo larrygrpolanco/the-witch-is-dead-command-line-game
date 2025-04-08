@@ -1,0 +1,101 @@
+/* static/global.css */
+@font-face {
+	font-family: 'HanddrawnFont';
+	src:
+		url('/fonts/your-handdrawn-font.woff2') format('woff2'),
+		url('/fonts/your-handdrawn-font.woff') format('woff');
+	font-weight: normal;
+	font-style: normal;
+}
+
+/* Reset styles */
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	width: 100%;
+}
+
+body {
+	font-family: 'HanddrawnFont', cursive, sans-serif;
+	color: #3a3a3a;
+	line-height: 1.6;
+	background-color: #e9e2d0;
+	overflow-x: hidden;
+}
+
+/* Typography */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-family: 'HanddrawnFont', cursive;
+	color: #5c4b31;
+	margin-top: 0;
+}
+
+p {
+	margin-top: 0;
+}
+
+/* Buttons */
+button {
+	cursor: pointer;
+	font-family: 'HanddrawnFont', cursive;
+	transition: all 0.2s ease;
+}
+
+button:hover {
+	opacity: 0.9;
+}
+
+button:active {
+	transform: translateY(1px);
+}
+
+/* Focus styles for accessibility */
+*:focus {
+	outline: 2px solid #5c4b31;
+	outline-offset: 2px;
+}
+
+/* Custom scrollbar for Firefox */
+* {
+	scrollbar-width: thin;
+	scrollbar-color: #a89e8a transparent;
+}
+
+/* Custom scrollbar for Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+	width: 6px;
+}
+
+*::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+	background-color: #a89e8a;
+	border-radius: 3px;
+}
+
+/* Utilities */
+.visually-hidden {
+	border: 0;
+	clip: rect(0 0 0 0);
+	height: 1px;
+	margin: -1px;
+	overflow: hidden;
+	padding: 0;
+	position: absolute;
+	width: 1px;
+}
