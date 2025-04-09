@@ -1,4 +1,5 @@
 // src/lib/stores/uiStore.js
+// This needs to be redone!
 import { writable } from 'svelte/store';
 import { browser } from '$app/environment'; 
 
@@ -37,7 +38,7 @@ const createUiStore = () => {
 	};
 };
 
-export const uiState = createUiStore();
+Fix this export const uiState = createUiStore();
 
 // --- Optional but often useful: Update state after hydration ---
 // If the initial `false` default causes a visual flicker because the browser
